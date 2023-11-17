@@ -5,7 +5,7 @@ WORKING IDEA ::<br/> This app extracts date from the amazon url given from the u
 
 Procedure to use::<br /> The landing page of the site contains all the relevant procedure to use the app effectively and in correct manner<br /><br /><br />
 
-Important Points::
+Important Points::<br />
 1.When the first time the program is loaded on the computer then you need to migrate the sqlite database in order to 
   set-it-up.<br /><br />
 2.The app will allow the user to track the price of that product only ones a day.<br /><br />
