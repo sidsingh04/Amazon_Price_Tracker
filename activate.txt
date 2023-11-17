@@ -2,9 +2,4 @@ write the following commands on the terminal for activating the virtual environm
 1->Set-ExecutionPolicy RemoteSigned -Scope Process
 2->.venv\Scripts\activate
 
-Useful commands->
-1.)pip freeze (tells us dependencies used in the app)
-2.)pip freeze > requirements.txt (this would save the dependencies in the text form in the given file name)
 
-** Encountered Problems-->
-1.) Flask migrate is not updating the database as intended , so employed manual way of updating and adding tables
