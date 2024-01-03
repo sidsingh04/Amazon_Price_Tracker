@@ -68,7 +68,7 @@ class OfficialName(db1.Model):
     id=db1.Column(db1.Integer,primary_key=True)
     name_id=db1.Column(db1.Integer,db1.ForeignKey('products.id'))
     name=db1.Column(db1.String(100))
-    currency=db1.Column(db1.String(5))    
+    # currency=db1.Column(db1.String(5))    
 
 # we can create a new column for storing currencies
 
@@ -192,7 +192,7 @@ def user():
             new_track=LastTracked(track_id=product_id,capacity=0,date=today)
             new_price=Prices(price_id=product_id,p1="NOT_TRACKED",p2='NOT_TRACKED',p3='NOT_TRACKED',p4='NOT_TRACKED',p5='NOT_TRACKED',p6='NOT_TRACKED',p7='NOT_TRACKED')
             new_date=Date(date_id=product_id,d1='day-1',d2='day-2',d3='day-3',d4='day-4',d5='day-5',d6='day-6',d7='day-7')
-            new_official=OfficialName(name_id=product_id,name="Product is not being tracked",currency="N")
+            new_official=OfficialName(name_id=product_id,name="Product is not being tracked")
             db1.session.add(new_price)
             db1.session.add(new_track)
             db1.session.add(new_date)
@@ -339,7 +339,7 @@ def track():
         dateobj.d1=today_date
         price.p1=priceobj
         official.name=my_dict["name"]
-        official.currency=my_dict["currency"]
+        # official.currency=my_dict["currency"]
         
         db1.session.commit()
     
@@ -409,12 +409,12 @@ async def advanced():
     val=check(d)
     
     my_dict=[]
-    cur=official.currency
+    # cur=official.currency
     
     val=check(d)
     
-    if cur is None:
-        cur="₹"
+    # if cur is None:
+    cur="₹"
     
     if(val<=2):
         return render_template("message.html",id=id,message=f"You need to track {3-val} times more to get Advanced Analysis",type="danger",head="LessTrack")
