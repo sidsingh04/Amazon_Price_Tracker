@@ -1,11 +1,11 @@
-from flask import Flask,render_template,request,redirect,flash,session
+from flask import Flask,render_template,request,redirect,flash,session,url_for
 from flask_sqlalchemy import SQLAlchemy
-from datetime import date
+from datetime import date,datetime
 from scrapper import extract_Data
+from plot import plot,check
 
-# from flask_migrate import Migrate
 
-# flask migrating is not giving changes as intended
+
 
 app=Flask(__name__,template_folder='template')
 app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///Accounts.sqlite3'
@@ -15,7 +15,6 @@ app.secret_key="price"
 
 db1=SQLAlchemy(app)
 
-# migrate=Migrate(app,db1)
 
 # creating a table in the database Accounts
 # parent class
@@ -68,8 +67,10 @@ class LastTracked(db1.Model):
 class OfficialName(db1.Model):
     id=db1.Column(db1.Integer,primary_key=True)
     name_id=db1.Column(db1.Integer,db1.ForeignKey('products.id'))
-    name=db1.Column(db1.String(100))    
+    name=db1.Column(db1.String(100))
+    currency=db1.Column(db1.String(5))    
 
+# we can create a new column for storing currencies
 
 # creating the database manually so it is working inside the context
 with app.app_context():
@@ -191,7 +192,7 @@ def user():
             new_track=LastTracked(track_id=product_id,capacity=0,date=today)
             new_price=Prices(price_id=product_id,p1="NOT_TRACKED",p2='NOT_TRACKED',p3='NOT_TRACKED',p4='NOT_TRACKED',p5='NOT_TRACKED',p6='NOT_TRACKED',p7='NOT_TRACKED')
             new_date=Date(date_id=product_id,d1='day-1',d2='day-2',d3='day-3',d4='day-4',d5='day-5',d6='day-6',d7='day-7')
-            new_official=OfficialName(name_id=product_id,name="Product is not being tracked")
+            new_official=OfficialName(name_id=product_id,name="Product is not being tracked",currency="N")
             db1.session.add(new_price)
             db1.session.add(new_track)
             db1.session.add(new_date)
@@ -325,12 +326,12 @@ def track():
     
     if days_tracked != 0:
         if today_date == tracker.date:
-            return render_template("message.html",id=id,message="User allowed to track price only once a day",type="danger")
+            return render_template("message.html",id=id,message="User allowed to track price only once a day",type="danger",head="OverRequest")
         
     my_dict=extract_Data(url)
     
     if my_dict is None:
-        return render_template("message.html",id=id,message="No data is extracted from the given URL",type="danger")
+        return render_template("message.html",id=id,message="No data is extracted from the given URL",type="danger",head="Failure")
     
     priceobj=my_dict["price"]
     
@@ -338,6 +339,7 @@ def track():
         dateobj.d1=today_date
         price.p1=priceobj
         official.name=my_dict["name"]
+        official.currency=my_dict["currency"]
         
         db1.session.commit()
     
@@ -375,10 +377,56 @@ def track():
     tracker.capacity=(days_tracked+1)%7
     db1.session.commit()
     
-    return render_template("message.html",id=id,message="Your Order is Successfully Tracked",type="success")
-        
-     
+    return render_template("message.html",id=id,message="Your Order is Successfully Tracked",type="success",head="Success")
+
+ 
+@app.route("/item/advanced",methods=['POST'])
+async def advanced():
+    id=request.form.get("analysis")
+    dates=Date.query.filter_by(date_id=id).first()
+    prices=Prices.query.filter_by(price_id=id).first()
+    official=OfficialName.query.filter_by(name_id=id).first()
     
+    d=[]
+    p=[]
+    # making a array with correct sequence of dates and pushing it in plot remains....
+    d.append(dates.d1) 
+    d.append(dates.d2) 
+    d.append(dates.d3)
+    d.append(dates.d4)
+    d.append(dates.d5)
+    d.append(dates.d6)
+    d.append(dates.d7)
+    
+    p.append(prices.p1)
+    p.append(prices.p2)
+    p.append(prices.p3)
+    p.append(prices.p4)
+    p.append(prices.p5)
+    p.append(prices.p6)
+    p.append(prices.p7)
+    
+    val=check(d)
+    
+    my_dict=[]
+    cur=official.currency
+    
+    val=check(d)
+    
+    if cur is None:
+        cur="₹"
+    
+    if(val<=2):
+        return render_template("message.html",id=id,message=f"You need to track {3-val} times more to get Advanced Analysis",type="danger",head="LessTrack")
+    else:
+        my_dict=[]
+        for i in range(0,val):
+            dict={'date':d[i],'price':p[i]}
+            my_dict.append(dict)
+        my_dict.sort(key=lambda x:datetime.strptime(x['date'],"%d/%m/%Y"))
+        await plot(my_dict,cur)
+        return render_template("message.html",id=id,message="Return to the activity page",type="success",head="Success")
+        
     
     
         
